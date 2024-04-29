@@ -1,1 +1,1 @@
-Transformer Decoder from scratch!!
+Transformer (Encoder + Decoder) from scratch!!
