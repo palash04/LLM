@@ -94,14 +94,19 @@ class GPT(nn.Module):
         # classifier layer
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
 
-        print('-'*100)
-        print(self.transformer.wte.weight.shape)
-        print(self.lm_head.weight.shape)
         # weight sharing scheme
         self.transformer.wte.weight = self.lm_head.weight
-        print(self.transformer.wte.weight.shape)
-        print(self.lm_head.weight.shape)
-        print('-'*100)
+        
+        # init params
+        self.apply(self._init_weights)
+
+    def _init_weights(self, module):
+        if isinstance(module, nn.Linear):
+            torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
+            if module.bias is not None:
+                torch.nn.init.zeros_(module.bias)
+        elif isinstance(module, nn.Embedding):
+            torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
         
 
     def forward(self, idx, targets=None):
@@ -208,7 +213,9 @@ if torch.cuda.is_available():
     device = "cuda"
 print(f"using device: {device}")
 
+
 train_loader = DataLoaderLite(B = 4, T = 32)
+
 
 # model = GPT.from_pretrained('gpt2')
 model = GPT(GPTConfig()) # Random initialization for training from scratch
@@ -230,3 +237,4 @@ for i in range(50):
 
 logits, loss = model(x, y)
 print(loss)
+
