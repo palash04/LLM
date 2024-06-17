@@ -38,7 +38,7 @@ class CausalSelfAttention(nn.Module):
         y = y.transpose(1, 2).contiguous().view(B, T, C) # (B ,T, C)
 
         # output projection
-        y = self.c_proj(y)
+        y = self.c_proj(y) # (B, T, C)
         return y
 
 
@@ -94,6 +94,26 @@ class GPT(nn.Module):
         # classifier layer
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
 
+    def forward(self, idx):
+        # idx is of shape (B, T)
+        B, T = idx.size()
+        assert T <= self.config.block_size, f"seq len should be less than equal to {T}"
+        # forward the token and position embeddings
+        pos = torch.arange(0, T, dtype=torch.long, device=idx.device) # (T)
+        pos_emb = self.transformer.wpe(pos) # position embeddings of shape (T, n_embd)
+        tok_emb = self.transformer.wte(idx) # token embeddings of shape (B, T, n_embd)
+
+        x = pos_emb + tok_emb  # (B, T, n_embd)
+        # forward the blocks of the transformer
+        for block in self.transformer.h:
+            x = block(x)
+        # x: (B, T, n_embd)
+        # forward the final layernorm and the classifier
+        x = self.transformer.ln_f(x) # x: (B, T, n_embd)
+        logits = self.lm_head(x) # (B, T, vocab_size)
+        return logits
+
+
     @classmethod
     def from_pretrained(cls, model_type):
         """Loads pretrained GPT-2 model weights from huggingface"""
@@ -139,5 +159,9 @@ class GPT(nn.Module):
         return model
 
 
+# ------------------------------------------------------------------------ #
+
 model = GPT.from_pretrained('gpt2')
 print(model)
+
+
