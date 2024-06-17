@@ -161,12 +161,18 @@ class GPT(nn.Module):
 
 # ------------------------------------------------------------------------ #
 
+device = "cpu"
+if torch.cuda.is_available():
+    device = "cuda"
+print(f"using device: {device}")
+
 num_return_sequences = 5
 max_length = 32
 
 model = GPT.from_pretrained('gpt2')
+# model = GPT(GPTConfig()) # Random initialization for training from scratch
 model.eval()  # does not affect anything, since train and eval is same as no dropout, BN
-model.to('cuda')
+model.to(device)
 
 # prefix tokens
 import tiktoken
@@ -174,7 +180,7 @@ enc = tiktoken.get_encoding('gpt2')
 tokens = enc.encode("Hello, I'm a language model,")
 tokens = torch.tensor(tokens, dtype=torch.long)
 tokens = tokens.unsqueeze(0).repeat(num_return_sequences, 1) # (5, T)
-x = tokens.to('cuda')
+x = tokens.to(device)
 
 # generate, x: (B, T)
 torch.manual_seed(42)
