@@ -220,19 +220,17 @@ if torch.cuda.is_available():
 print(f"using device: {device}")
 
 
-
-
-
 # model = GPT.from_pretrained('gpt2')
 model = GPT(GPTConfig()) # Random initialization for training from scratch
 model.to(device)
+model = torch.compile(model)
 print(model)
 
 # train_loader = DataLoaderLite(B = 8, T = 1024)
 train_loader = DataLoaderLite(B = 16, T = 1024)
 
 # running tf32
-# torch.set_float32_matmul_precision("high")
+torch.set_float32_matmul_precision("high")
 
 optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)
 for i in range(5):
@@ -254,37 +252,3 @@ for i in range(5):
 
 logits, loss = model(x, y)
 print(loss)
-
-# model.eval()  # does not affect anything, since train and eval is same as no dropout, BN
-# # prefix tokens
-# num_return_sequences = 5
-# max_length = 32
-# tokens = enc.encode("Hello, I'm a language model,")
-# tokens = torch.tensor(tokens, dtype=torch.long)
-# tokens = tokens.unsqueeze(0).repeat(num_return_sequences, 1) # (5, T)
-# x = tokens.to(device)
-
-# # generate, x: (B, T)
-# torch.manual_seed(42)
-# torch.cuda.manual_seed(42)
-# print(x.size())
-# while x.size(1) < max_length:
-#     with torch.no_grad():
-#         logits = model(x) # (B, T, vocab_size)
-#         # take the logits at the last position
-#         logits = logits[:, -1, :] # (B, vocab_size)
-#         # get the probabilities
-#         probs = F.softmax(logits, dim=-1)
-#         # top-k sampling of 50
-#         topk_probs, topk_indices = torch.topk(probs, 50, dim=-1) # (B, 50)
-#         # select a token from the topk probabilities
-#         ix = torch.multinomial(topk_probs, 1) # (B, 1)
-#         # gather the corresponding indices
-#         xcol = torch.gather(topk_indices, -1, ix) # (B, 1)
-#         x = torch.cat((x, xcol), dim=1)
-
-# # print the generated text
-# for i in range(num_return_sequences):
-#     tokens = x[i, :max_length].tolist()
-#     decoded = enc.decode(tokens)
-#     print(">", decoded)
