@@ -19,8 +19,8 @@ class CausalSelfAttention(nn.Module):
         self.n_head = config.n_head
         self.n_embd = config.n_embd
         self.T = config.block_size
-        self.register_buffer("bias", torch.tril(torch.ones(self.T, self.T))
-                                        .view(1, 1, self.T, self.T))
+        # self.register_buffer("bias", torch.tril(torch.ones(self.T, self.T))
+        #                                 .view(1, 1, self.T, self.T))
 
     def forward(self, x):
         B, T, C = x.size() # (Batch_size, seq_len, embedding_dimensionality)
